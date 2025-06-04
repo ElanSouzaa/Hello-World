@@ -1,4 +1,4 @@
-// Script para controle do menu responsivo
+// Controle de menu responsivo
 const toggle = document.querySelector('.menu-toggle');
 const navList = document.querySelector('.nav-list');
 
@@ -8,11 +8,14 @@ if (toggle) {
     });
 }
 
-// Placeholder de submissão do formulário
+// Fecha o menu ao selecionar um link (modo mobile)
+navList?.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => navList.classList.remove('open'));
+});
+
+// Alerta simples para submissão do formulário
 const form = document.querySelector('.search-form');
-if (form) {
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert('Busca enviada! (funcionalidade de backend não implementada)');
-    });
-}
+form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    alert('Busca enviada!');
+});

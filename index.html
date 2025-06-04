@@ -4,33 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corsário Imóveis</title>
+    <!-- Fonte similar à utilizada no site original -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Cabeçalho -->
+    <!-- Cabeçalho com logo, contatos e menu -->
     <header class="header">
-        <div class="logo">Corsário Imóveis</div>
-        <div class="contacts">
-            <span>(00) 1234-5678</span>
-            <span>(00) 8765-4321</span>
+        <div class="container header-main">
+            <h1 class="logo">Corsário Imóveis</h1>
+            <div class="phones">
+                <span>(00) 1234-5678</span>
+                <span>(00) 8765-4321</span>
+            </div>
+            <button class="menu-toggle" aria-label="Abrir menu">&#9776;</button>
         </div>
-        <nav class="nav">
+        <nav class="nav container">
             <ul class="nav-list">
                 <li><a href="#">Início</a></li>
                 <li><a href="#">Quem Somos</a></li>
                 <li><a href="#">Cadastrar seu Imóvel</a></li>
                 <li><a href="#">Contato</a></li>
             </ul>
-            <button class="menu-toggle" aria-label="Abrir Menu">☰</button>
         </nav>
     </header>
 
-    <!-- Seção Hero -->
+    <!-- Seção principal com imagem de fundo -->
     <section class="hero">
-        <h1>Encontre seu Imóvel</h1>
+        <h2>Encontre seu Imóvel</h2>
     </section>
 
-    <!-- Formulário de Busca -->
+    <!-- Formulário de busca -->
     <section class="search-section">
         <form class="search-form">
             <div class="form-row">
@@ -39,7 +43,6 @@
                     <option value="SP">SP</option>
                     <option value="RJ">RJ</option>
                     <option value="MG">MG</option>
-                    <!-- Mais opções -->
                 </select>
                 <select name="cidade" required>
                     <option value="">Cidade</option>
