@@ -45,14 +45,14 @@
 const numerosVermelhos=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 const numerosPretos=[2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
 const TOTAL_COLS=702;
-const TOTAL_ROWS=301;
+const TOTAL_ROWS=101;
 const gridWrapper=document.getElementById('gridWrapper');
 const input=document.getElementById('numeroInput');
 const historico=[];
-let coluna=1;
+let coluna=0;
 let linha=50;
-let ultimaCor=null; // ultima cor vermelha/preta utilizada nas regras
-let mudouCorUltima=false;
+let ultimaCor=null; // cor da jogada anterior
+let repeticoes=0; // contagem de repeticoes consecutivas da cor atual
 let totalVermelho=0,totalPreto=0,totalZero=0;
 const contagem={};
 
@@ -79,22 +79,24 @@ function atualizarEstatisticas(){const quentesUl=document.getElementById('quente
  document.getElementById('percentVermelho').textContent=total?((totalVermelho/total*100).toFixed(1)+'%'):'0%';
  document.getElementById('percentPreto').textContent=total?((totalPreto/total*100).toFixed(1)+'%'):'0%';
  document.getElementById('percentZero').textContent=total?((totalZero/total*100).toFixed(1)+'%'):'0%';
+
+ const ultimos=historico.slice(-25);
+ let cV=0,cP=0,cZ=0;
+ ultimos.forEach(e=>{if(e.cor==='vermelho')cV++;else if(e.cor==='preto')cP++;else cZ++;});
  let tendencia='Neutra';
- if(totalPreto>totalVermelho) tendencia='Alta';
- else if(totalVermelho>totalPreto) tendencia='Baixa';
+ if(ultimos.length===25&&cV!==cP){tendencia=cP>cV?'Alta':'Baixa';}
  document.getElementById('tendencia').textContent=tendencia;}
 
-function adicionarNumero(){const valor=parseInt(input.value,10);if(isNaN(valor)||valor<0||valor>36)return;const prev={linha,coluna,ultimaCor,mudouCorUltima};let corClasse='',corAtual=null;
- if(valor===0){corClasse='zero';totalZero++;}
+function adicionarNumero(){const valor=parseInt(input.value,10);if(isNaN(valor)||valor<0||valor>36)return;const prev={linha,coluna,ultimaCor,repeticoes};let corClasse='',corAtual='';
+ if(valor===0){corClasse='zero';corAtual='zero';totalZero++;repeticoes=0;ultimaCor='zero';}
  else if(numerosVermelhos.includes(valor)){corClasse='vermelho';corAtual='vermelho';
-  if(ultimaCor==='vermelho'||ultimaCor===null){linha-- ;mudouCorUltima=false;}
-  else if(ultimaCor==='preto'){if(!mudouCorUltima){mudouCorUltima=true;}else{linha--;mudouCorUltima=false;}}
+  if(ultimaCor==='vermelho'){repeticoes++;if(repeticoes>=2)linha++;}else{repeticoes=1;}
   totalVermelho++;ultimaCor='vermelho';}
  else{corClasse='preto';corAtual='preto';
-  if(ultimaCor==='preto'||ultimaCor===null){linha++;mudouCorUltima=false;}
-  else if(ultimaCor==='vermelho'){if(!mudouCorUltima){mudouCorUltima=true;}else{linha++;mudouCorUltima=false;}}
+  if(ultimaCor==='preto'){repeticoes++;if(repeticoes>=2)linha--;}
+  else{repeticoes=1;}
   totalPreto++;ultimaCor='preto';}
- linha=Math.max(0,Math.min(300,linha));
+ linha=Math.max(0,Math.min(TOTAL_ROWS-1,linha));
  coluna++; if(coluna>TOTAL_COLS) coluna=TOTAL_COLS; // evita extrapolar
  const idx=indiceCelula(linha,coluna);
  const cel=gridWrapper.children[idx];
@@ -105,9 +107,9 @@ function adicionarNumero(){const valor=parseInt(input.value,10);if(isNaN(valor)|
  contagem[valor]=(contagem[valor]||0)+1;
  input.value='';atualizarEstatisticas();}
 
-function desfazerUltimo(){const reg=historico.pop();if(!reg)return;const cel=gridWrapper.children[reg.index];cel.textContent='';cel.className='cell'+(reg.prev.linha===50?' linha-50':'');
- linha=reg.prev.linha;coluna=reg.prev.coluna;ultimaCor=reg.prev.ultimaCor;mudouCorUltima=reg.prev.mudouCorUltima;
- contagem[reg.numero]--; if(reg.cor==='vermelho')totalVermelho--; else if(reg.cor==='preto')totalPreto--; else totalZero--;const idx=indiceCelula(linha,coluna);gridWrapper.children[idx].scrollIntoView({behavior:'smooth',block:'center'});atualizarEstatisticas();}
+function desfazerUltimo(){const reg=historico.pop();if(!reg)return;const cel=gridWrapper.children[reg.index];const r=Math.floor(reg.index/(TOTAL_COLS+1))-1;cel.textContent='';cel.className='cell'+(r===50?' linha-50':'');
+ linha=reg.prev.linha;coluna=reg.prev.coluna;ultimaCor=reg.prev.ultimaCor;repeticoes=reg.prev.repeticoes;
+ contagem[reg.numero]--; if(reg.cor==='vermelho')totalVermelho--; else if(reg.cor==='preto')totalPreto--; else totalZero--;const idx=indiceCelula(linha,Math.max(1,coluna));gridWrapper.children[idx].scrollIntoView({behavior:'smooth',block:'center'});atualizarEstatisticas();}
 
 document.getElementById('addBtn').addEventListener('click',adicionarNumero);
 document.getElementById('undoBtn').addEventListener('click',desfazerUltimo);
