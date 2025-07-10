@@ -3,6 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <title>Gráfico Roleta - Vermelho vs Preto</title>
+  <link rel="stylesheet" href="estilo.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+    }
+
+    #container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #gridWrapper {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+      scroll-behavior: smooth;
+      background: #f8f9fa;
+    }
+
+    #painel {
+      width: 280px;
+      background-color: #ffffff;
+      padding: 20px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 3;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      background: #e9ecef;
+      z-index: 2;
+      text-align: center;
+      font-weight: bold;
+      padding: 4px;
+    }
+
+    .row-label {
+      position: sticky;
+      left: 0;
+      background: #e9ecef;
+      z-index: 2;
+      text-align: right;
+      padding-right: 4px;
+      font-weight: bold;
+    }
+
+    .cell {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #dee2e6;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .vermelho {
+      background-color: #dc3545;
+      color: white;
+      font-weight: bold;
+    }
+
+    .preto {
+      background-color: #212529;
+      color: white;
+      font-weight: bold;
+    }
+
+    .zero {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+    }
+
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ced4da;
+    }
+
+    button {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0b5ed7;
+    }
+
+    h3 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .linha-50 {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  </style>
   <style>
     body {
       margin: 0;
@@ -154,6 +268,10 @@
     const numerosVermelhos = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
     const numerosPretos = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
     const gridWrapper = document.getElementById("gridWrapper");
+
+    let coluna = 0;
+    let linha = 50;
+    const gridWrapper = document.getElementById("gridWrapper");
     const TOTAL_COLS = 702;
 
     let coluna = 0;
@@ -164,6 +282,10 @@
     let ultimaCor = null;
     let mudouCorUltima = false;
 
+    function criarGrade() {
+      const colLabels = ["", ...Array.from({ length: 81 }, (_, i) => String.fromCharCode(65 + (i % 26)) + (i >= 26 ? String.fromCharCode(65 + Math.floor(i / 26) - 1) : ""))];
+      for (let r = 0; r <= 100; r++) {
+        for (let c = 0; c <= 81; c++) {
     function gerarLabelColuna(n) {
       let label = "";
       while (n >= 0) {
@@ -206,35 +328,7 @@
       friosUl.innerHTML = "";
 
       const entradas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
-      entradas.slice(0, 5).forEach(([n, c]) => {
-        const li = document.createElement("li");
-        li.textContent = `${n} - ${c}x`;
-        quentesUl.appendChild(li);
-      });
-      entradas.slice(-5).forEach(([n, c]) => {
-        const li = document.createElement("li");
-        li.textContent = `${n} - ${c}x`;
-        friosUl.appendChild(li);
-      });
-
-      const total = totalVermelho + totalPreto + totalZero;
-      document.getElementById("percentVermelho").textContent = `${((totalVermelho / total) * 100).toFixed(1)}% (${totalVermelho})`;
-      document.getElementById("percentPreto").textContent = `${((totalPreto / total) * 100).toFixed(1)}% (${totalPreto})`;
-      document.getElementById("percentZero").textContent = `${((totalZero / total) * 100).toFixed(1)}% (${totalZero})`;
-      document.getElementById("tendencia").textContent = totalPreto > totalVermelho ? "Alta" : totalVermelho > totalPreto ? "Baixa" : "Neutra";
-    }
-
-    function adicionarNumero() {
-      const input = document.getElementById("numeroInput");
-      const numero = parseInt(input.value);
-      if (isNaN(numero) || numero < 0 || numero > 36) return;
-
-      let corClasse = "";
-      let corAtual = null;
-
-      if (numero === 0) {
-        corClasse = "zero";
-        corAtual = "zero";
+@@ -216,72 +238,72 @@
         totalZero++;
       } else if (numerosVermelhos.includes(numero)) {
         corClasse = "vermelho";
@@ -260,6 +354,7 @@
 
       ultimaCor = corAtual;
       coluna++;
+      const index = (linha + 1) * 82 + coluna;
       const index = (linha + 1) * (TOTAL_COLS + 1) + coluna;
       const celula = gridWrapper.children[index];
       celula.classList.add(corClasse);
@@ -295,7 +390,9 @@
       if (e.key === "Enter") adicionarNumero();
     });
 
-    function rolarParaLinha50() {
+    function rolarParaLinha50() {␍␊
+      const linha50Index = (50 + 1) * 82 + 1;
+    function rolarParaLinha50() {␊
       const linha50Index = (50 + 1) * (TOTAL_COLS + 1) + 1;
       const celulaLinha50 = gridWrapper.children[linha50Index];
       if (celulaLinha50) {
