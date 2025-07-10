@@ -14,6 +14,9 @@
   .vermelho{background:#dc3545;color:#fff;font-weight:bold}
   .preto{background:#000;color:#fff;font-weight:bold}
   .zero{background:#28a745;color:#fff;font-weight:bold}
+  .selecionada{box-shadow:inset 0 0 0 2px #4A90E2;}
+  #colorMenu{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #ccc;border-radius:4px;padding:6px;display:none;z-index:5;}
+  #colorMenu button{width:24px;height:24px;margin:2px;border:none;cursor:pointer;border-radius:4px}
   #painel{width:340px;background:#fff;padding:20px;box-shadow:-2px 0 5px rgba(0,0,0,.1);position:sticky;right:0;top:0;height:100vh;overflow-y:auto;z-index:3}
   input,button{width:100%;padding:8px;margin:10px 0;font-size:14px;border-radius:6px;border:1px solid #ced4da}
   button{background:#0d6efd;color:#fff;cursor:pointer;border:none}
@@ -40,6 +43,15 @@
     <p><strong>Tendência:</strong> <span id="tendencia">Neutra</span></p>
   </div>
 </div>
+<div id="colorMenu">
+  <button data-color="">W</button>
+  <button data-color="#dc3545" style="background:#dc3545"></button>
+  <button data-color="#000000" style="background:#000"></button>
+  <button data-color="#28a745" style="background:#28a745"></button>
+  <button data-color="#ffff00" style="background:#ffff00"></button>
+  <button data-color="#add8e6" style="background:#add8e6"></button>
+  <button data-color="#808080" style="background:#808080"></button>
+</div>
 <script>
 // listas de cores da roleta
 const numerosVermelhos=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
@@ -60,11 +72,21 @@ const contagem={};
 function gerarLabelColuna(n){let label="";while(n>=0){label=String.fromCharCode(65+n%26)+label;n=Math.floor(n/26)-1;}return label;}
 
 // cria grade completa apenas uma vez
-function criarGrade(){let html='<div class="header"></div>';
- for(let c=0;c<TOTAL_COLS;c++){html+=`<div class="header">${gerarLabelColuna(c)}</div>`;}
- for(let r=0;r<TOTAL_ROWS;r++){html+=`<div class="row-label">${r}</div>`;
-  for(let c=0;c<TOTAL_COLS;c++){let cls='cell';if(r===50)cls+=' linha-50';html+=`<div class="${cls}"></div>`;}}
- gridWrapper.innerHTML=html;}
+function criarGrade(){
+  let html='<div class="header" id="selectAll"></div>';
+  for(let c=0;c<TOTAL_COLS;c++){
+    html+=`<div class="header" data-col="${c}">${gerarLabelColuna(c)}</div>`;
+  }
+  for(let r=0;r<TOTAL_ROWS;r++){
+    html+=`<div class="row-label" data-row="${r}">${r}</div>`;
+    for(let c=0;c<TOTAL_COLS;c++){
+      let cls='cell';
+      if(r===50) cls+=' linha-50';
+      html+=`<div class="${cls}" data-row="${r}" data-col="${c}"></div>`;
+    }
+  }
+  gridWrapper.innerHTML=html;
+}
 
 function indiceCelula(r,c){return (r+1)*(TOTAL_COLS+1)+c;}
 
@@ -117,6 +139,75 @@ input.addEventListener('keypress',e=>{if(e.key==='Enter')adicionarNumero();});
 
 function rolarParaLinha50(){const idx=indiceCelula(50,1);const cel=gridWrapper.children[idx];if(cel)cel.scrollIntoView({behavior:'auto',block:'center'});}
 criarGrade();rolarParaLinha50();
+
+let selecionando=false,startRow=null,startCol=null,selecionadas=[];
+const colorMenu=document.getElementById('colorMenu');
+
+function limparSelecao(){selecionadas.forEach(c=>c.classList.remove('selecionada'));selecionadas=[];}
+
+function exibirMenu(){colorMenu.style.display=selecionadas.length?'block':'none';}
+
+function selecionarIntervalo(r2,c2){limparSelecao();
+  const r1=Math.min(startRow,r2),rMax=Math.max(startRow,r2);
+  const c1=Math.min(startCol,c2),cMax=Math.max(startCol,c2);
+  for(let r=r1;r<=rMax;r++){
+    for(let c=c1;c<=cMax;c++){
+      const cel=gridWrapper.querySelector(`.cell[data-row='${r}'][data-col='${c}']`);
+      if(cel){cel.classList.add('selecionada');selecionadas.push(cel);} }
+  }
+}
+
+gridWrapper.addEventListener('mousedown',e=>{
+  if(e.button!==0)return;
+  const target=e.target;
+  if(target.id==='selectAll'){
+    limparSelecao();
+    selecionadas=Array.from(gridWrapper.querySelectorAll('.cell'));
+    selecionadas.forEach(c=>c.classList.add('selecionada'));
+    exibirMenu();
+    e.preventDefault();
+    return;
+  }
+  if(target.classList.contains('header')&&target.dataset.col!==undefined){
+    limparSelecao();
+    selecionadas=Array.from(gridWrapper.querySelectorAll(`.cell[data-col='${target.dataset.col}']`));
+    selecionadas.forEach(c=>c.classList.add('selecionada'));
+    exibirMenu();
+    return;
+  }
+  if(target.classList.contains('row-label')&&target.dataset.row!==undefined){
+    limparSelecao();
+    selecionadas=Array.from(gridWrapper.querySelectorAll(`.cell[data-row='${target.dataset.row}']`));
+    selecionadas.forEach(c=>c.classList.add('selecionada'));
+    exibirMenu();
+    return;
+  }
+  if(target.classList.contains('cell')){
+    limparSelecao();
+    selecionando=true;
+    startRow=parseInt(target.dataset.row);
+    startCol=parseInt(target.dataset.col);
+    selecionarIntervalo(startRow,startCol);
+    colorMenu.style.display='none';
+    e.preventDefault();
+  }
+});
+
+gridWrapper.addEventListener('mousemove',e=>{
+  if(!selecionando)return;
+  const cel=e.target.closest('.cell');
+  if(!cel)return;
+  const r=parseInt(cel.dataset.row),c=parseInt(cel.dataset.col);
+  selecionarIntervalo(r,c);
+});
+
+document.addEventListener('mouseup',()=>{if(selecionando){selecionando=false;exibirMenu();}});
+
+colorMenu.addEventListener('click',e=>{
+  if(e.target.tagName!=='BUTTON')return;
+  const cor=e.target.dataset.color;
+  selecionadas.forEach(c=>c.style.backgroundColor=cor);
+});
 </script>
 </body>
 </html>
