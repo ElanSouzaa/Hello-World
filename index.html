@@ -24,6 +24,8 @@
   button:hover{background:#0b5ed7}
   h3{margin-top:20px;margin-bottom:10px}
   ul{padding-left:20px}
+  .top-colors{display:flex;gap:10px;border:1px solid #ccc;padding:10px;border-radius:6px}
+  .top-colors div{flex:1}
 
   @media (max-width:768px) and (orientation:portrait){
     body{flex-direction:column;height:auto;}
@@ -42,10 +44,16 @@
   <button id="addBtn">Adicionar</button>
   <button id="undoBtn">Desfazer</button>
   <div id="estatisticas">
-    <h3>Top 5 Quentes</h3>
-    <ul id="quentes"></ul>
-    <h3>Top 5 Frios</h3>
-    <ul id="frios"></ul>
+    <div id="topColors" class="top-colors">
+      <div>
+        <h3>🔴 Top 5 Red's</h3>
+        <ul id="topReds"></ul>
+      </div>
+      <div>
+        <h3>⚫ Top 5 Black's</h3>
+        <ul id="topBlacks"></ul>
+      </div>
+    </div>
     <p><strong>Vermelhos:</strong> <span id="percentVermelho">0%</span></p>
     <p><strong>Pretos:</strong> <span id="percentPreto">0%</span></p>
     <p><strong>Zeros:</strong> <span id="percentZero">0%</span></p>
@@ -99,13 +107,14 @@ function criarGrade(){
 
 function indiceCelula(r,c){return (r+1)*(TOTAL_COLS+1)+c;}
 
-function atualizarEstatisticas(){const quentesUl=document.getElementById('quentes');
- const friosUl=document.getElementById('frios');
- quentesUl.innerHTML='';friosUl.innerHTML='';
+function atualizarEstatisticas(){const ulRed=document.getElementById('topReds');
+ const ulBlack=document.getElementById('topBlacks');
+ ulRed.innerHTML='';ulBlack.innerHTML='';
  const entradas=Object.entries(contagem).sort((a,b)=>b[1]-a[1]);
- entradas.slice(0,5).forEach(([n,q])=>{const li=document.createElement('li');li.textContent=`${n} - ${q}x`;quentesUl.appendChild(li);});
- const frios=entradas.filter(e=>e[1]>0).sort((a,b)=>a[1]-b[1]).slice(0,5);
- frios.forEach(([n,q])=>{const li=document.createElement('li');li.textContent=`${n} - ${q}x`;friosUl.appendChild(li);});
+ const reds=entradas.filter(([n])=>numerosVermelhos.includes(parseInt(n,10))).slice(0,5);
+ reds.forEach(([n,q])=>{const li=document.createElement('li');li.textContent=`${n} - ${q}x`;ulRed.appendChild(li);});
+ const blacks=entradas.filter(([n])=>numerosPretos.includes(parseInt(n,10))).slice(0,5);
+ blacks.forEach(([n,q])=>{const li=document.createElement('li');li.textContent=`${n} - ${q}x`;ulBlack.appendChild(li);});
  const total=totalVermelho+totalPreto+totalZero;
  document.getElementById('percentVermelho').textContent=total?((totalVermelho/total*100).toFixed(1)+'%'):'0%';
  document.getElementById('percentPreto').textContent=total?((totalPreto/total*100).toFixed(1)+'%'):'0%';
@@ -118,7 +127,7 @@ function atualizarEstatisticas(){const quentesUl=document.getElementById('quente
  if(ultimos.length===25&&cV!==cP){tendencia=cP>cV?'Alta':'Baixa';}
  document.getElementById('tendencia').textContent=tendencia;}
 
-function adicionarNumero(){const valor=parseInt(input.value,10);if(isNaN(valor)||valor<0||valor>36)return;const prev={linha,coluna,ultimaCor,repeticoes};let corClasse='',corAtual='';
+function adicionarNumero(){const valor=parseInt(input.value,10);if(isNaN(valor)||valor<0||valor>36){alert('⚠️ Número inválido!\nOs números válidos vão de 0 a 36.');return;}const prev={linha,coluna,ultimaCor,repeticoes};let corClasse='',corAtual='';
  if(valor===0){corClasse='zero';corAtual='zero';totalZero++;repeticoes=0;ultimaCor='zero';}
  else if(numerosVermelhos.includes(valor)){corClasse='vermelho';corAtual='vermelho';
   if(ultimaCor==='vermelho'){repeticoes++;if(repeticoes>=2)linha++;}else{repeticoes=1;}
@@ -130,15 +139,16 @@ function adicionarNumero(){const valor=parseInt(input.value,10);if(isNaN(valor)|
  linha=Math.max(0,Math.min(TOTAL_ROWS-1,linha));
  coluna++; if(coluna>TOTAL_COLS) coluna=TOTAL_COLS; // evita extrapolar
  const idx=indiceCelula(linha,coluna);
- const cel=gridWrapper.children[idx];
- cel.classList.add(corClasse);
- cel.textContent=valor;
+const cel=gridWrapper.children[idx];
+cel.classList.add(corClasse);
+ cel.dataset.numColor=corClasse;
+cel.textContent=valor;
  cel.scrollIntoView({behavior:'smooth',block:'center'});
  historico.push({prev,index:idx,numero:valor,cor:corClasse});
  contagem[valor]=(contagem[valor]||0)+1;
  input.value='';atualizarEstatisticas();}
 
-function desfazerUltimo(){const reg=historico.pop();if(!reg)return;const cel=gridWrapper.children[reg.index];const r=Math.floor(reg.index/(TOTAL_COLS+1))-1;cel.textContent='';cel.className='cell'+(r===50?' linha-50':'');
+function desfazerUltimo(){const reg=historico.pop();if(!reg)return;const cel=gridWrapper.children[reg.index];const r=Math.floor(reg.index/(TOTAL_COLS+1))-1;cel.textContent='';cel.className='cell'+(r===50?' linha-50':'');cel.style.backgroundColor='';cel.style.color='';delete cel.dataset.numColor;
  linha=reg.prev.linha;coluna=reg.prev.coluna;ultimaCor=reg.prev.ultimaCor;repeticoes=reg.prev.repeticoes;
  contagem[reg.numero]--; if(reg.cor==='vermelho')totalVermelho--; else if(reg.cor==='preto')totalPreto--; else totalZero--;const idx=indiceCelula(linha,Math.max(1,coluna));gridWrapper.children[idx].scrollIntoView({behavior:'smooth',block:'center'});atualizarEstatisticas();}
 
@@ -215,7 +225,13 @@ document.addEventListener('mouseup',()=>{if(selecionando){selecionando=false;exi
 colorMenu.addEventListener('click',e=>{
   if(e.target.tagName!=='BUTTON')return;
   const cor=e.target.dataset.color;
-  selecionadas.forEach(c=>c.style.backgroundColor=cor);
+  selecionadas.forEach(c=>{
+    c.style.backgroundColor=cor;
+    const base=c.dataset.numColor;
+    if(base==='vermelho')c.style.color='#dc3545';
+    else if(base==='preto')c.style.color='#000';
+    else if(base==='zero')c.style.color='#28a745';
+  });
 });
 </script>
 </body>
